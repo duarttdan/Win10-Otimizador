@@ -8,12 +8,21 @@ function createWindow() {
     height: 800,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      enableRemoteModule: true
     }
   });
 
-  // Isso carrega o resultado do seu build do Vite
-  win.loadFile(path.join(__dirname, 'dist/index.html'));
+  if (app.isPackaged) {
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    win.loadFile(indexPath).catch(err => {
+      console.error('Failed to load packaged index.html:', err);
+    });
+  } else {
+    win.loadURL('http://localhost:5173').catch(err => {
+      console.error('Failed to load dev server at http://localhost:5173:', err);
+    });
+  }
 }
 
 ipcMain.handle('run-powershell', async (event, command) => {
