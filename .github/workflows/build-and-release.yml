@@ -1,0 +1,42 @@
+name: Build Windows Installer and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci
+      - name: Build and package with Electron Forge
+        run: npm run make
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-installer
+          path: out/make/squirrel.windows64/*.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: win-installer
+          path: ./installer
+      - name: Create GitHub release and upload installer
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: ./installer/*.exe

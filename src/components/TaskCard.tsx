@@ -6,6 +6,7 @@ interface TaskCardProps {
   onRun: (task: OptimizationTask) => void;
   onRevert: (task: OptimizationTask) => void;
   onShowCommand: (task: OptimizationTask) => void;
+  allowed: boolean;
 }
 
 const riskColors = {
@@ -59,9 +60,9 @@ export default function TaskCard({ task, onRun, onRevert, onShowCommand }: TaskC
 
         <div className="flex flex-col gap-2 shrink-0">
           <button
-            onClick={() => task.status === 'pending' && onRun(task)}
-            disabled={task.status === 'running'}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium transition-colors ${sc.btnClass}`}
+            onClick={() => task.status === 'pending' && allowed && onRun(task)}
+            disabled={task.status === 'running' || !allowed}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium transition-colors ${!allowed ? 'bg-slate-500 cursor-not-allowed' : sc.btnClass}`}
           >
             {sc.icon}
             {sc.label}
@@ -77,6 +78,9 @@ export default function TaskCard({ task, onRun, onRevert, onShowCommand }: TaskC
             </button>
           )}
 
+          {!allowed && (
+            <div className="text-[10px] text-amber-300 mt-1">Plano insuficiente: disponível apenas para Pro/Enterprise</div>
+          )}
           <button
             onClick={() => onShowCommand(task)}
             className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"

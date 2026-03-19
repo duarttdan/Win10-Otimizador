@@ -1,8 +1,8 @@
 {
-  "name": "react-vite-tailwind",
+  "name": "win10-otimizador",
   "version": "1.0.0",
   "author": "Dan",
-  "description": "Meu primeiro aplicativo desktop feito com Vite e Electron",
+  "description": "App desktop para otimização de Windows",
   "main": "main.js",
   "scripts": {
     "dev": "vite",
@@ -22,7 +22,9 @@
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-deb": "^7.11.1",
     "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
     "@tailwindcss/vite": "4.1.17",
     "@types/node": "^22.0.0",
     "@types/react": "19.2.7",
@@ -43,6 +45,11 @@
           "config": {
             "name": "MeuProjeto"
           }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": ["darwin", "linux", "win32"],
+          "config": {}
         }
       ]
     }

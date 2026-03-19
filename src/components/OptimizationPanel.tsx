@@ -12,6 +12,7 @@ interface OptimizationPanelProps {
   description: string;
   icon: React.ReactNode;
   tasks: OptimizationTask[];
+  plan: 'starter' | 'pro' | 'enterprise';
   onTaskUpdate: (taskId: string, updates: Partial<OptimizationTask>) => void;
   onLog: (line: Omit<TerminalLine, 'id'>) => void;
   onOptimized: () => void;
@@ -23,6 +24,7 @@ export default function OptimizationPanel({
   description,
   icon,
   tasks,
+  plan,
   onTaskUpdate,
   onLog,
   onOptimized,
@@ -36,6 +38,12 @@ export default function OptimizationPanel({
   const progress = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
   const executeTask = async (task: OptimizationTask) => {
+    if (task.allowedPlans && !task.allowedPlans.includes(plan)) {
+      onTaskUpdate(task.id, { status: 'failed' });
+      onLog({ text: `[BLOQUEADO] "${task.name}" não está disponível para o plano ${plan.toUpperCase()}.`, type: 'error' });
+      return;
+    }
+
     if (createRestore && (task.risk === 'high' || task.risk === 'critical')) {
       onRestorePoint(`Antes de: ${task.name}`);
       onLog({ text: `[RESTORE] Ponto de restauração criado: "Antes de: ${task.name}"`, type: 'info' });
@@ -158,15 +166,19 @@ export default function OptimizationPanel({
 
       {/* Tasks */}
       <div className="space-y-3">
-        {tasks.map(task => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onRun={handleRun}
-            onRevert={handleRevert}
-            onShowCommand={setCommandModal}
-          />
-        ))}
+        {tasks.map(task => {
+          const allowed = !task.allowedPlans || task.allowedPlans.includes(plan);
+          return (
+            <TaskCard
+              key={task.id}
+              task={task}
+              allowed={allowed}
+              onRun={handleRun}
+              onRevert={handleRevert}
+              onShowCommand={setCommandModal}
+            />
+          );
+        })}
       </div>
 
       {/* Confirm Modal */}

@@ -15,6 +15,8 @@ export interface MetricHistory {
   memory: number;
 }
 
+export type ProductPlan = 'starter' | 'pro' | 'enterprise';
+
 export interface OptimizationTask {
   id: string;
   name: string;
@@ -28,6 +30,7 @@ export interface OptimizationTask {
   revertCommand?: string;
   estimatedGain: string;
   actualGain?: string;
+  allowedPlans?: ProductPlan[];
 }
 
 export interface PerformanceReport {

@@ -9,6 +9,7 @@ import ScriptsPanel from './components/ScriptsPanel';
 import { useSystemMetrics } from './hooks/useSystemMetrics';
 import { cleanupTasks, powerTasks, inputLagTasks, serviceTasks } from './data/optimizations';
 import {
+  ProductPlan,
   TabId,
   OptimizationTask,
   TerminalLine,
@@ -33,8 +34,33 @@ export default function App() {
   const [restorePoints, setRestorePoints] = useState<RestorePoint[]>([]);
   const lineIdRef = useRef(0);
 
+  const [plan, setPlan] = useState<ProductPlan>('starter');
+  const [licenseKey, setLicenseKey] = useState('');
+  const [licenseMessage, setLicenseMessage] = useState('Use uma chave válida para desbloquear planos PRO/Enterprise.');
   const [aggressiveMode, setAggressiveMode] = useState(false);
   const { metrics, history } = useSystemMetrics(optimized, aggressiveMode);
+
+  const validLicenses: Record<string, ProductPlan> = {
+    'STARTER-001': 'starter',
+    'PRO-001': 'pro',
+    'ENTERPRISE-001': 'enterprise',
+  };
+
+  const activateLicense = () => {
+    const code = licenseKey.trim().toUpperCase();
+    if (!code) {
+      setLicenseMessage('Insira sua chave de licença.');
+      return;
+    }
+    const targetPlan = validLicenses[code];
+    if (targetPlan) {
+      setPlan(targetPlan);
+      setLicenseMessage(`Licença validada: plano ${targetPlan.toUpperCase()}.`);
+      setLicenseKey('');
+      return;
+    }
+    setLicenseMessage('Chave inválida. Use STARTER-001, PRO-001 ou ENTERPRISE-001.');
+  };
 
   const addTerminalLine = useCallback((line: Omit<TerminalLine, 'id'>) => {
     lineIdRef.current += 1;
@@ -111,6 +137,7 @@ export default function App() {
             tasks={cleanup}
             onTaskUpdate={makeTaskUpdater(setCleanup)}
             onLog={addTerminalLine}
+            plan={plan}
             onOptimized={handleOptimized}
             onRestorePoint={createRestorePoint}
           />
@@ -124,6 +151,7 @@ export default function App() {
             tasks={power}
             onTaskUpdate={makeTaskUpdater(setPower)}
             onLog={addTerminalLine}
+            plan={plan}
             onOptimized={handleOptimized}
             onRestorePoint={createRestorePoint}
           />
@@ -137,6 +165,7 @@ export default function App() {
             tasks={inputLag}
             onTaskUpdate={makeTaskUpdater(setInputLag)}
             onLog={addTerminalLine}
+            plan={plan}
             onOptimized={handleOptimized}
             onRestorePoint={createRestorePoint}
           />
@@ -150,6 +179,7 @@ export default function App() {
             tasks={services}
             onTaskUpdate={makeTaskUpdater(setServices)}
             onLog={addTerminalLine}
+            plan={plan}
             onOptimized={handleOptimized}
             onRestorePoint={createRestorePoint}
           />
@@ -171,21 +201,44 @@ export default function App() {
       <main className="flex-1 overflow-y-auto">
         <div className="p-6 max-w-6xl mx-auto">
           {/* Top Bar */}
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/50">
-            <div className="flex items-center gap-4">
-              {restorePoints.length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="w-2 h-2 rounded-full bg-blue-400" />
-                  {restorePoints.length} ponto(s) de restauração
-                </div>
-              )}
+          <div className="flex flex-col gap-3 mb-6 pb-4 border-b border-slate-800/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {restorePoints.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                    {restorePoints.length} ponto(s) de restauração
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span>Windows 10 Pro</span>
+                <span className="w-1 h-1 rounded-full bg-slate-700" />
+                <span>{new Date().toLocaleDateString('pt-BR')}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-700" />
+                <span className="text-green-400">v2.0</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-xs text-slate-500">
-              <span>Windows 10 Pro</span>
-              <span className="w-1 h-1 rounded-full bg-slate-700" />
-              <span>{new Date().toLocaleDateString('pt-BR')}</span>
-              <span className="w-1 h-1 rounded-full bg-slate-700" />
-              <span className="text-green-400">v2.0</span>
+            <div className="bg-slate-800/50 border border-slate-700/40 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <div className="text-xs uppercase tracking-widest text-slate-400 mb-1">Plano Atual</div>
+                <div className="text-sm font-semibold text-white">{plan.toUpperCase()}</div>
+                <div className="text-xs text-slate-400">{licenseMessage}</div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <input
+                  value={licenseKey}
+                  onChange={e => setLicenseKey(e.target.value)}
+                  placeholder="Chave de licença"
+                  className="px-3 py-2 rounded-md bg-slate-900 border border-slate-700 text-sm text-white"
+                />
+                <button
+                  onClick={activateLicense}
+                  className="px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-sm font-semibold"
+                >
+                  Ativar Licença
+                </button>
+              </div>
             </div>
           </div>
 

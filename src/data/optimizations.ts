@@ -220,6 +220,7 @@ Write-Host "[OK] HPET desativado - reinicialização necessária" -ForegroundCol
 bcdedit /deletevalue disabledynamictick
 Write-Host "[OK] HPET restaurado ao padrão" -ForegroundColor Green`,
     estimatedGain: 'Redução de 2-10ms na latência do sistema',
+    allowedPlans: ['pro', 'enterprise'],
   },
   {
     id: 'input-nagle',
@@ -244,6 +245,7 @@ foreach ($adapter in $adapters) {
     Remove-ItemProperty -Path $adapter.PSPath -Name "TCPNoDelay" -ErrorAction SilentlyContinue
 }`,
     estimatedGain: 'Redução de 10-50ms na latência de rede',
+    allowedPlans: ['pro', 'enterprise'],
   },
   {
     id: 'input-mouse',
@@ -284,6 +286,7 @@ Write-Host "[OK] Fullscreen Optimizations desativadas globalmente" -ForegroundCo
     revertCommand: `Remove-ItemProperty -Path "HKCU:\\System\\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -ErrorAction SilentlyContinue
 Remove-ItemProperty -Path "HKCU:\\System\\GameConfigStore" -Name "GameDVR_HonorUserFSEBehaviorMode" -ErrorAction SilentlyContinue`,
     estimatedGain: 'Elimina stuttering em tela cheia',
+    allowedPlans: ['pro', 'enterprise'],
   },
   {
     id: 'input-priority',
@@ -301,6 +304,7 @@ Write-Host "[OK] Prioridade multimídia configurada para máximo" -ForegroundCol
     revertCommand: `Set-ItemProperty -Path "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" -Name "SystemResponsiveness" -Value 20 -Type DWord -Force
 Set-ItemProperty -Path "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile" -Name "NetworkThrottlingIndex" -Value 10 -Type DWord -Force`,
     estimatedGain: 'Prioridade máxima para aplicações multimídia',
+    allowedPlans: ['pro', 'enterprise'],
   },
 ];
 
@@ -451,6 +455,7 @@ foreach ($app in $apps) {
 }
 Write-Host "[OK] Bloatware removido (apps comuns)." -ForegroundColor Green`,
     estimatedGain: 'Libera recursos e limpa o Windows para desempenho agressivo',
+    allowedPlans: ['pro', 'enterprise'],
   },
   {
     id: 'svc-aggressive-performance-registry',
@@ -521,6 +526,7 @@ try {
 }
 Write-Host "[INFO] Reinicie o PC após a atualização do driver." -ForegroundColor Cyan`,
     estimatedGain: 'Atualiza driver GPU AMD para máxima performance e compatibilidade',
+    allowedPlans: ['pro', 'enterprise'],
   },
 ];
 
