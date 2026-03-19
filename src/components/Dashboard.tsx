@@ -8,9 +8,11 @@ interface DashboardProps {
   history: MetricHistory[];
   optimized: boolean;
   optimizationCount: number;
+  aggressiveMode: boolean;
+  onToggleAggressive: () => void;
 }
 
-export default function Dashboard({ metrics, history, optimized, optimizationCount }: DashboardProps) {
+export default function Dashboard({ metrics, history, optimized, optimizationCount, aggressiveMode, onToggleAggressive }: DashboardProps) {
   const score = optimized
     ? Math.min(98, 70 + optimizationCount * 3 + Math.floor(Math.random() * 5))
     : Math.max(35, 55 - Math.floor(Math.random() * 10));
@@ -30,7 +32,9 @@ export default function Dashboard({ metrics, history, optimized, optimizationCou
         <div>
           <h2 className="text-2xl font-bold text-white">Monitoramento em Tempo Real</h2>
           <p className="text-slate-400 text-sm mt-1">
-            {optimized ? '✅ Sistema otimizado e monitorado' : '⚠️ Sistema não otimizado - performance reduzida'}
+            {optimized
+              ? `✅ Sistema otimizado ${aggressiveMode ? ' (Modo Agressivo ligado)' : ''}`
+              : '⚠️ Sistema não otimizado - performance reduzida'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -39,6 +43,12 @@ export default function Dashboard({ metrics, history, optimized, optimizationCou
               {optimized ? '🟢 Otimizado' : '🔴 Não Otimizado'}
             </span>
           </div>
+          <button
+            onClick={onToggleAggressive}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${aggressiveMode ? 'bg-red-500 text-white' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'}`}
+          >
+            {aggressiveMode ? '🔥 Modo Agressivo ON' : '⚡ Ativar Modo Agressivo'}
+          </button>
         </div>
       </div>
 

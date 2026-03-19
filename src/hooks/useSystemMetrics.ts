@@ -13,7 +13,7 @@ function formatUptime(seconds: number): string {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
-export function useSystemMetrics(optimized: boolean) {
+export function useSystemMetrics(optimized: boolean, aggressive: boolean) {
   const uptimeRef = useRef(Math.floor(Math.random() * 36000) + 3600);
   const [metrics, setMetrics] = useState<SystemMetrics>({
     cpu: 45,
@@ -30,18 +30,20 @@ export function useSystemMetrics(optimized: boolean) {
 
   const updateMetrics = useCallback(() => {
     uptimeRef.current += 1;
-    const cpuBase = optimized ? 20 : 45;
-    const memBase = optimized ? 40 : 62;
+    const cpuBase = aggressive ? 15 : optimized ? 25 : 45;
+    const memBase = aggressive ? 35 : optimized ? 45 : 62;
+    const tempBase = aggressive ? 42 : optimized ? 45 : 55;
+    const processBase = aggressive ? 88 : optimized ? 95 : 142;
 
     setMetrics(prev => ({
-      cpu: Math.round(generateMetric(prev.cpu * 0.7 + cpuBase * 0.3, 8, 5, 95)),
-      memory: Math.round(generateMetric(prev.memory * 0.8 + memBase * 0.2, 4, 20, 90)),
+      cpu: Math.round(generateMetric(prev.cpu * 0.7 + cpuBase * 0.3, aggressive ? 5 : 8, 5, 95)),
+      memory: Math.round(generateMetric(prev.memory * 0.8 + memBase * 0.2, aggressive ? 4 : 4, 20, 90)),
       disk: Math.round(generateMetric(prev.disk, 2, 0, 100)),
-      temperature: Math.round(generateMetric(optimized ? 45 : 55, 3, 30, 85)),
-      processes: Math.round(generateMetric(optimized ? 95 : 142, 5, 60, 200)),
+      temperature: Math.round(generateMetric(tempBase, 3, 30, 90)),
+      processes: Math.round(generateMetric(processBase, 5, 60, 220)),
       uptime: formatUptime(uptimeRef.current),
-      networkUp: Number(generateMetric(optimized ? 1.2 : 2.4, 1, 0, 10).toFixed(1)),
-      networkDown: Number(generateMetric(optimized ? 8.5 : 15.7, 3, 0, 50).toFixed(1)),
+      networkUp: Number(generateMetric(aggressive ? 1.0 : optimized ? 1.2 : 2.4, 1, 0, 10).toFixed(1)),
+      networkDown: Number(generateMetric(aggressive ? 7.5 : optimized ? 8.5 : 15.7, 3, 0, 50).toFixed(1)),
     }));
   }, [optimized]);
 

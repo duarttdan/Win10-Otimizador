@@ -33,7 +33,8 @@ export default function App() {
   const [restorePoints, setRestorePoints] = useState<RestorePoint[]>([]);
   const lineIdRef = useRef(0);
 
-  const { metrics, history } = useSystemMetrics(optimized);
+  const [aggressiveMode, setAggressiveMode] = useState(false);
+  const { metrics, history } = useSystemMetrics(optimized, aggressiveMode);
 
   const addTerminalLine = useCallback((line: Omit<TerminalLine, 'id'>) => {
     lineIdRef.current += 1;
@@ -93,11 +94,13 @@ export default function App() {
       case 'dashboard':
         return (
           <Dashboard
-            metrics={metrics}
-            history={history}
-            optimized={optimized}
-            optimizationCount={optimizationCount}
-          />
+              metrics={metrics}
+              history={history}
+              optimized={optimized}
+              optimizationCount={optimizationCount}
+              aggressiveMode={aggressiveMode}
+              onToggleAggressive={() => setAggressiveMode(prev => !prev)}
+            />
         );
       case 'cleanup':
         return (

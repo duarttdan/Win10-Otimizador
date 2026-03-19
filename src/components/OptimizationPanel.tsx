@@ -5,6 +5,8 @@ import ConfirmModal from './ConfirmModal';
 import CommandModal from './CommandModal';
 import { OptimizationTask, TerminalLine } from '../types';
 
+const { ipcRenderer } = window.require('electron');
+
 interface OptimizationPanelProps {
   title: string;
   description: string;
@@ -33,7 +35,7 @@ export default function OptimizationPanel({
   const completedCount = tasks.filter(t => t.status === 'completed').length;
   const progress = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
-  const simulateTask = async (task: OptimizationTask) => {
+  const executeTask = async (task: OptimizationTask) => {
     if (createRestore && (task.risk === 'high' || task.risk === 'critical')) {
       onRestorePoint(`Antes de: ${task.name}`);
       onLog({ text: `[RESTORE] Ponto de restauração criado: "Antes de: ${task.name}"`, type: 'info' });
@@ -43,19 +45,23 @@ export default function OptimizationPanel({
     onTaskUpdate(task.id, { status: 'running' });
     onLog({ text: `> Executando: ${task.name}...`, type: 'command' });
 
-    await new Promise(r => setTimeout(r, 1500 + Math.random() * 2000));
-
-    const success = Math.random() > 0.05;
-    if (success) {
+    try {
+      const result = await ipcRenderer.invoke('run-powershell', task.powershellCommand);
       onTaskUpdate(task.id, {
         status: 'completed',
         actualGain: task.estimatedGain,
       });
       onLog({ text: `[OK] ${task.name} concluído com sucesso`, type: 'success' });
+      if (result.stdout) {
+        onLog({ text: result.stdout.trim(), type: 'info' });
+      }
       onOptimized();
-    } else {
+    } catch (error) {
       onTaskUpdate(task.id, { status: 'failed' });
-      onLog({ text: `[ERRO] ${task.name} falhou - nenhuma alteração foi feita`, type: 'error' });
+      onLog({ text: `[ERRO] ${task.name} falhou: ${error.error || error}`, type: 'error' });
+      if (error.stderr) {
+        onLog({ text: error.stderr.trim(), type: 'error' });
+      }
     }
   };
 
@@ -63,13 +69,13 @@ export default function OptimizationPanel({
     if (task.risk === 'high' || task.risk === 'critical' || task.risk === 'medium') {
       setConfirmModal(task);
     } else {
-      simulateTask(task);
+      executeTask(task);
     }
   };
 
   const handleConfirm = () => {
     if (confirmModal) {
-      simulateTask(confirmModal);
+      executeTask(confirmModal);
       setConfirmModal(null);
     }
   };
@@ -77,9 +83,26 @@ export default function OptimizationPanel({
   const handleRevert = async (task: OptimizationTask) => {
     onTaskUpdate(task.id, { status: 'running' });
     onLog({ text: `> Revertendo: ${task.name}...`, type: 'warning' });
-    await new Promise(r => setTimeout(r, 1000));
-    onTaskUpdate(task.id, { status: 'pending', actualGain: undefined });
-    onLog({ text: `[OK] ${task.name} revertido ao estado original`, type: 'success' });
+
+    if (task.revertCommand) {
+      try {
+        const result = await ipcRenderer.invoke('run-powershell', task.revertCommand);
+        onTaskUpdate(task.id, { status: 'pending', actualGain: undefined });
+        onLog({ text: `[OK] ${task.name} revertido ao estado original`, type: 'success' });
+        if (result.stdout) {
+          onLog({ text: result.stdout.trim(), type: 'info' });
+        }
+      } catch (error) {
+        onLog({ text: `[ERRO] Falha ao reverter ${task.name}: ${error.error || error}`, type: 'error' });
+        if (error.stderr) {
+          onLog({ text: error.stderr.trim(), type: 'error' });
+        }
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 1000));
+      onTaskUpdate(task.id, { status: 'pending', actualGain: undefined });
+      onLog({ text: `[OK] ${task.name} revertido ao estado original`, type: 'success' });
+    }
   };
 
   const handleRunAll = async () => {
@@ -93,7 +116,7 @@ export default function OptimizationPanel({
     }
 
     for (const task of pending) {
-      await simulateTask(task);
+      await executeTask(task);
     }
     onLog({ text: `═══ Todas as tarefas concluídas ═══\n`, type: 'info' });
   };

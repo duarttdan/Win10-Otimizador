@@ -421,6 +421,107 @@ Write-Host "[OK] OneDrive em background desativado" -ForegroundColor Green`,
     revertCommand: `Remove-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive" -Name "DisableFileSyncNGSC" -ErrorAction SilentlyContinue`,
     estimatedGain: '1-3% menos uso de rede e disco',
   },
+  {
+    id: 'svc-remove-bloatware',
+    name: 'Remover Apps Bloatware (agressivo)',
+    description: 'Remove aplicativos pré-instalados do Windows que não afetam uso normal',
+    category: 'services',
+    risk: 'high',
+    status: 'pending',
+    permanent: true,
+    reversible: false,
+    powershellCommand: `# Remover Bloatware Windows 10
+$apps = @(
+    "Microsoft.BingNews",
+    "Microsoft.XboxGameOverlay",
+    "Microsoft.XboxGamingOverlay",
+    "Microsoft.XboxIdentityProvider",
+    "Microsoft.MicrosoftOfficeHub",
+    "Microsoft.GetHelp",
+    "Microsoft.Microsoft3DViewer",
+    "Microsoft.YourPhone",
+    "Microsoft.Get-started",
+    "Microsoft.WindowsCamera",
+    "Microsoft.ZuneMusic",
+    "Microsoft.ZuneVideo"
+)
+foreach ($app in $apps) {
+    Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue
+    Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like "*$app*" | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+}
+Write-Host "[OK] Bloatware removido (apps comuns)." -ForegroundColor Green`,
+    estimatedGain: 'Libera recursos e limpa o Windows para desempenho agressivo',
+  },
+  {
+    id: 'svc-aggressive-performance-registry',
+    name: 'Configurações Performance Agressiva',
+    description: 'Aplica ajustes de registro avançados para modo desempenho máximo',
+    category: 'services',
+    risk: 'critical',
+    status: 'pending',
+    permanent: true,
+    reversible: true,
+    powershellCommand: `# Ajustes de registro agressivos
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "DisableSleep" -Value 1 -Type DWord -Force
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 26 -Type DWord -Force
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "ClearPageFileAtShutdown" -Value 0 -Type DWord -Force
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value 0 -Type String -Force
+Write-Host "[OK] Ajustes de performance agressiva aplicados" -ForegroundColor Yellow`,
+    revertCommand: `Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 2 -Type DWord -Force
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value 400 -Type String -Force
+Write-Host "[OK] Ajustes revertidos para padrão" -ForegroundColor Green`,
+    estimatedGain: 'Maior responsividade e latência reduzida (modo agressivo)',
+  },
+  {
+    id: 'svc-update-nvidia-driver',
+    name: 'Atualizar Driver Nvidia (winget)',
+    description: 'Baixa e instala automaticamente a versão mais recente do driver Nvidia via winget',
+    category: 'services',
+    risk: 'high',
+    status: 'pending',
+    permanent: true,
+    reversible: false,
+    powershellCommand: `# Atualizar driver NVIDIA usando winget
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host "[ERRO] winget não está disponível. Instale o App Installer e execute novamente." -ForegroundColor Red
+    exit 1
+}
+try {
+    winget install --id NVIDIA.GeForceExperience -e --source winget --accept-source-agreements --accept-package-agreements -h
+    Write-Host "[OK] GeForce Experience instalado/atualizado" -ForegroundColor Green
+    winget upgrade --id NVIDIA.NVIDIA-Display-Driver -e --source winget --accept-source-agreements --accept-package-agreements -h
+    Write-Host "[OK] Driver Nvidia atualizado" -ForegroundColor Green
+} catch {
+    Write-Host "[AVISO] Falha ao atualizar Nvidia via winget: $_" -ForegroundColor Yellow
+}
+Write-Host "[INFO] Para atualização completa, reinicie e execute GeForce Experience." -ForegroundColor Cyan`,
+    estimatedGain: 'Atualiza driver GPU Nvidia para máxima estabilidade e performance',
+  },
+  {
+    id: 'svc-update-amd-driver',
+    name: 'Atualizar Driver AMD (winget)',
+    description: 'Baixa e instala automaticamente a última versão do driver AMD Radeon via winget',
+    category: 'services',
+    risk: 'high',
+    status: 'pending',
+    permanent: true,
+    reversible: false,
+    powershellCommand: `# Atualizar driver AMD usando winget
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host "[ERRO] winget não está disponível. Instale o App Installer e execute novamente." -ForegroundColor Red
+    exit 1
+}
+try {
+    winget install --id AMD.AMDSoftware -e --source winget --accept-source-agreements --accept-package-agreements -h
+    Write-Host "[OK] AMD Software: Adrenalin Edition instalado/atualizado" -ForegroundColor Green
+    winget upgrade --id AMD.AMDSoftware -e --source winget --accept-source-agreements --accept-package-agreements -h
+    Write-Host "[OK] Driver AMD atualizado" -ForegroundColor Green
+} catch {
+    Write-Host "[AVISO] Falha ao atualizar AMD via winget: $_" -ForegroundColor Yellow
+}
+Write-Host "[INFO] Reinicie o PC após a atualização do driver." -ForegroundColor Cyan`,
+    estimatedGain: 'Atualiza driver GPU AMD para máxima performance e compatibilidade',
+  },
 ];
 
 export const allTasks = [...cleanupTasks, ...powerTasks, ...inputLagTasks, ...serviceTasks];
