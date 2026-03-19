@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>{const links=document.querySelectorAll('a[href^="#"]');links.forEach(link=>{link.addEventListener('click',e=>{e.preventDefault();const tg=link.getAttribute('href');if(!tg||tg==="#")return;const target=document.querySelector(tg);if(target)target.scrollIntoView({behavior:'smooth',block:'start'});});});});
